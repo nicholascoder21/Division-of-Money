@@ -1,77 +1,111 @@
 import streamlit as st
 
-st.title("🍽️ Smart Bill Splitter")
+st.title("🍽️ FairSplit - Smart Expense Sharing")
 
-# Number of people
-num_people = st.number_input(
-    "Number of people",
-    min_value=1,
-    step=1
+# Enter people
+st.header("Step 1: Enter People")
+
+people_input = st.text_input(
+    "Enter names separated by commas",
+    placeholder="Neke, Kayden, John"
 )
 
-people = []
+if people_input:
 
-st.subheader("Enter Names")
+    people = [p.strip() for p in people_input.split(",")]
 
-for i in range(num_people):
-    name = st.text_input(
-        f"Person {i+1}",
-        key=f"name_{i}"
+    st.header("Step 2: Add Food Items")
+
+    num_items = st.number_input(
+        "Number of food items",
+        min_value=1,
+        step=1
     )
 
-    if name:
-        people.append(name)
+    payments = {person: 0.0 for person in people}
 
-st.divider()
+    for i in range(num_items):
 
-food_name = st.text_input("Food Name")
+        st.subheader(f"Food Item {i+1}")
 
-food_price = st.number_input(
-    "Total Price ($)",
-    min_value=0.0,
-    step=0.01
-)
-
-food_quantity = st.number_input(
-    "Total Quantity",
-    min_value=1,
-    step=1
-)
-
-consumption = {}
-
-st.subheader("Who Ate How Many?")
-
-total_consumed = 0
-
-for person in people:
-    amount = st.number_input(
-        f"{person}",
-        min_value=0,
-        step=1,
-        key=f"eat_{person}"
-    )
-
-    consumption[person] = amount
-    total_consumed += amount
-
-if st.button("Calculate"):
-
-    if total_consumed != food_quantity:
-        st.error(
-            f"Total consumed ({total_consumed}) must equal quantity ({food_quantity})"
+        food_name = st.text_input(
+            "Food Name",
+            key=f"name{i}"
         )
 
-    else:
+        price = st.number_input(
+            "Price ($)",
+            min_value=0.0,
+            step=0.01,
+            key=f"price{i}"
+        )
 
-        cost_per_unit = food_price / food_quantity
+        shared = st.checkbox(
+            "Shared Item?",
+            key=f"shared{i}"
+        )
 
-        st.subheader("Results")
+        if shared:
 
-        for person in people:
+            quantity = st.number_input(
+                "Total Quantity",
+                min_value=1,
+                step=1,
+                key=f"qty{i}"
+            )
 
-            payment = consumption[person] * cost_per_unit
+            consumption = {}
+            total_eaten = 0
+
+            st.write("How many portions did each person eat?")
+
+            for person in people:
+
+                amount = st.number_input(
+                    person,
+                    min_value=0,
+                    step=1,
+                    key=f"{person}_{i}"
+                )
+
+                consumption[person] = amount
+                total_eaten += amount
+
+            if total_eaten > 0:
+
+                cost_per_unit = price / quantity
+
+                for person in people:
+                    payments[person] += (
+                        consumption[person] * cost_per_unit
+                    )
+
+        else:
+
+            owner = st.selectbox(
+                "Who ordered this item?",
+                people,
+                key=f"owner{i}"
+            )
+
+            payments[owner] += price
+
+    if st.button("Calculate Bill"):
+
+        st.header("💰 Amount Owed")
+
+        grand_total = 0
+
+        for person, amount in payments.items():
 
             st.write(
-                f"{person}: ${payment:.2f}"
+                f"**{person}: ${amount:.2f}**"
             )
+
+            grand_total += amount
+
+        st.divider()
+
+        st.write(
+            f"**Total Bill: ${grand_total:.2f}**"
+        )
