@@ -1,63 +1,77 @@
 import streamlit as st
 
-st.title("🍽️ Bill Splitter")
+st.title("🍽️ Smart Bill Splitter")
 
 # Number of people
 num_people = st.number_input(
-    "Number of People",
+    "Number of people",
     min_value=1,
     step=1
 )
 
 people = []
 
-if num_people:
+st.subheader("Enter Names")
 
-    st.subheader("Enter Names")
-
-    for i in range(int(num_people)):
-        name = st.text_input(f"Person {i+1}")
-        people.append(name)
-
-    st.subheader("Food Items")
-
-    num_items = st.number_input(
-        "Number of Food Items",
-        min_value=1,
-        step=1
+for i in range(num_people):
+    name = st.text_input(
+        f"Person {i+1}",
+        key=f"name_{i}"
     )
 
-    total_bill = 0
+    if name:
+        people.append(name)
 
-    for i in range(int(num_items)):
+st.divider()
 
-        food_name = st.text_input(
-            f"Food Name {i+1}",
-            key=f"food{i}"
+food_name = st.text_input("Food Name")
+
+food_price = st.number_input(
+    "Total Price ($)",
+    min_value=0.0,
+    step=0.01
+)
+
+food_quantity = st.number_input(
+    "Total Quantity",
+    min_value=1,
+    step=1
+)
+
+consumption = {}
+
+st.subheader("Who Ate How Many?")
+
+total_consumed = 0
+
+for person in people:
+    amount = st.number_input(
+        f"{person}",
+        min_value=0,
+        step=1,
+        key=f"eat_{person}"
+    )
+
+    consumption[person] = amount
+    total_consumed += amount
+
+if st.button("Calculate"):
+
+    if total_consumed != food_quantity:
+        st.error(
+            f"Total consumed ({total_consumed}) must equal quantity ({food_quantity})"
         )
 
-        price = st.number_input(
-            f"Price of {food_name or f'Item {i+1}'}",
-            min_value=0.0,
-            key=f"price{i}"
-        )
+    else:
 
-        quantity = st.number_input(
-            f"Quantity",
-            min_value=1,
-            step=1,
-            key=f"qty{i}"
-        )
+        cost_per_unit = food_price / food_quantity
 
-        total_bill += price * quantity
-
-    if st.button("Calculate Split"):
-
-        share = total_bill / len(people)
-
-        st.success(f"Total Bill: ${total_bill:.2f}")
-
-        st.subheader("Payment Breakdown")
+        st.subheader("Results")
 
         for person in people:
-            st.write(f"💵 {person}: ${share:.2f}")
+
+            payment = consumption[person] * cost_per_unit
+
+            st.write(
+                f"{person}: ${payment:.2f}"
+            )
