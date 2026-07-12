@@ -1,6 +1,6 @@
 import streamlit as st
 
-st.title("🍽️ FairSplit - Smart Expense Sharing")
+st.title("🍽️ Bill splitter")
 
 # Enter people
 st.header("Step 1: Enter People")
